@@ -1,0 +1,3 @@
+[submodule "meta-agent"]
+	path = meta-agent
+	url = https://github.com/Approaching-AI/meta-agent.git
