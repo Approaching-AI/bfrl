@@ -1,0 +1,10 @@
+.tmp_research/
+
+memory/doc/bfrl-theoretical-increment-over-harness/_markdown_bfrl-theoretical-increment-over-harness/
+memory/doc/bfrl-theoretical-increment-over-harness/*.aux
+memory/doc/bfrl-theoretical-increment-over-harness/*.log
+memory/doc/bfrl-theoretical-increment-over-harness/*.markdown.lua
+memory/doc/bfrl-theoretical-increment-over-harness/*.markdown.out
+memory/doc/bfrl-theoretical-increment-over-harness/*.pdf
+memory/doc/bfrl-theoretical-increment-over-harness/*.tex
+memory/doc/bfrl-theoretical-increment-over-harness/*.toc
