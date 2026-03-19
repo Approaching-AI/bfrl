@@ -12,7 +12,7 @@ Each agent lives under `agents/<agent-name>/` and contains:
 
 The unified scheduler entrypoint is `agents/main.py`.
 
-`main.py` is the only poller in the formal system. Agents do not poll on their own.
+`main.py` is the only poller and the only public runtime entrypoint in the formal system. Agents do not poll on their own, and `main.py` is responsible for orchestrating the whole `notes -> doc -> sop` chain.
 
 ## Data Flow
 
@@ -24,6 +24,8 @@ The scheduler handles polling, wakeup, and dependency-aware execution order. The
 
 `main.py` only wakes agents and passes context. Each agent still inspects its own scope and decides the concrete processing set.
 
+During orchestration, `main.py` also emits human-readable monitor lines to the terminal so you can see which agent is being checked, skipped, launched, completed, or put back into sleep.
+
 ## Launchers
 
 Agent launch is runner-agnostic.
@@ -34,12 +36,20 @@ Agent launch is runner-agnostic.
 
 Current implementation includes the `codex` launcher as one adapter, not as the system architecture itself.
 
+Shared runtime settings now live in `agents/config.yaml`, including:
+
+- `watch`
+- `sleep_seconds`
+- `memory_root`
+- `default_model`
+- `agent_models`
+
 ## Entrypoints
 
-- `python agents/main.py list`
-- `python agents/main.py run --agent note-relation`
-- `python agents/main.py watch --agent doc-maintenance`
-- `python agents/main.py watch-all`
+- `python agents/main.py`
+  - run using the default `agents/config.yaml`
+- `python agents/main.py --config agents/config.yaml`
+  - run using an explicit JSON/YAML config file
 
 ## Conventions
 

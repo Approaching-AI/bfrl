@@ -1,20 +1,70 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import hashlib
 import json
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
+@dataclass(frozen=True)
+class SchedulerSettings:
+    watch: bool = False
+    sleep_seconds: float = 2.0
+    memory_root: str = "memory"
+    meta_agent_root: str = "meta-agent"
+    default_model: str = "gpt-5.4"
+    agent_models: dict[str, str] = field(
+        default_factory=lambda: {
+            "note-relation": "gpt-5.4",
+            "doc-maintenance": "gpt-5.4",
+            "sop-promotion": "gpt-5.4",
+        }
+    )
+    artifact_contract_agents: tuple[str, ...] = (
+        "note-relation",
+        "doc-maintenance",
+        "sop-promotion",
+    )
+
+    @property
+    def daily_notes_dir(self) -> str:
+        return f"{self.memory_root}/daily-notes"
+
+    @property
+    def doc_dir(self) -> str:
+        return f"{self.memory_root}/doc"
+
+    @property
+    def sop_dir(self) -> str:
+        return f"{self.memory_root}/sop"
+
+    @property
+    def meta_agent_doc_dir(self) -> str:
+        return f"{self.meta_agent_root}/doc"
+
+    def path_tokens(self) -> dict[str, str]:
+        return {
+            "memory_root": self.memory_root,
+            "daily_notes_dir": self.daily_notes_dir,
+            "doc_dir": self.doc_dir,
+            "sop_dir": self.sop_dir,
+            "meta_agent_root": self.meta_agent_root,
+            "meta_agent_doc_dir": self.meta_agent_doc_dir,
+        }
+
+    def model_for_agent(self, slug: str, configured_model: str | None) -> str:
+        return self.agent_models.get(slug, configured_model or self.default_model)
+
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORKSPACE_ROOT = SCRIPT_DIR.parent
-DEFAULT_AGENTS_DIR = "agents"
-DEFAULT_POLL_SECONDS = 2.0
+DEFAULT_CONFIG_PATH = SCRIPT_DIR / "config.yaml"
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -52,8 +102,57 @@ def ensure_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+def load_structured_config(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise SchedulerError(f"Config file not found: {path}")
+    suffix = path.suffix.lower()
+    raw = path.read_text(encoding="utf-8")
+    if suffix == ".json":
+        payload = json.loads(raw)
+    elif suffix in {".yaml", ".yml"}:
+        try:
+            import yaml
+        except ImportError as exc:
+            raise SchedulerError("YAML config requires PyYAML. Install it or use a JSON config file.") from exc
+        payload = yaml.safe_load(raw)
+    else:
+        raise SchedulerError(f"Unsupported config format: {path.suffix}")
+    if not isinstance(payload, dict):
+        raise SchedulerError("Top-level config payload must be an object.")
+    return payload
+
+
+def load_scheduler_settings(config_path: Path) -> SchedulerSettings:
+    payload = load_structured_config(config_path)
+    agent_models = payload.get("agent_models", {})
+    if not isinstance(agent_models, dict):
+        raise SchedulerError("agent_models must be an object.")
+    return SchedulerSettings(
+        watch=bool(payload.get("watch", False)),
+        sleep_seconds=float(payload.get("sleep_seconds", 2.0)),
+        memory_root=str(payload.get("memory_root", "memory")),
+        meta_agent_root=str(payload.get("meta_agent_root", "meta-agent")),
+        default_model=str(payload.get("default_model", "gpt-5.4")),
+        agent_models={str(key): str(value) for key, value in agent_models.items()},
+    )
+
+
+def render_path_template(template: str, tokens: dict[str, str]) -> str:
+    if "{" not in template:
+        return template
+    try:
+        return template.format_map(tokens)
+    except KeyError as exc:
+        missing_key = str(exc).strip("'")
+        raise SchedulerError(f"Unknown path template key: {missing_key}") from exc
+
+
 def iso_now() -> str:
     return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def emit_monitor(message: str) -> None:
+    print(f"[{iso_now()}] {message}", file=sys.stderr, flush=True)
 
 
 def relative_to_workspace(workspace_root: Path, path: Path) -> str:
@@ -78,6 +177,17 @@ def resolve_agent_path(workspace_root: Path, agent_dir: Path, requested_path: st
     if candidate != root and root not in candidate.parents:
         raise SchedulerError(f"Path escapes workspace: {requested_path}")
     return candidate
+
+
+def resolve_task_reference_path(workspace_root: Path, agent_dir: Path, requested_path: str) -> Path:
+    requested = Path(requested_path)
+    if requested.is_absolute():
+        return requested.resolve()
+
+    workspace_candidate = resolve_workspace_path(workspace_root, requested_path)
+    if workspace_candidate.exists():
+        return workspace_candidate
+    return resolve_agent_path(workspace_root, agent_dir, requested_path)
 
 
 def load_json_file(path: Path) -> dict[str, Any]:
@@ -123,18 +233,21 @@ def slugify_name(value: str) -> str:
     return slug
 
 
-def load_agent_spec(config_path: Path, workspace_root: Path) -> AgentSpec:
+def load_agent_spec(config_path: Path, workspace_root: Path, settings: SchedulerSettings) -> AgentSpec:
     payload = load_json_file(config_path)
     agent_dir = config_path.parent.resolve()
     name = str(payload["name"])
     slug = str(payload.get("id", "")).strip() or slugify_name(name)
+    path_tokens = settings.path_tokens()
 
     paths_payload = payload.get("paths", {})
     if not isinstance(paths_payload, dict):
         raise SchedulerError("paths must be an object.")
 
     configured_workspace_root = resolve_agent_path(
-        workspace_root, agent_dir, str(paths_payload.get("workspace_root", "../.."))
+        workspace_root,
+        agent_dir,
+        render_path_template(str(paths_payload.get("workspace_root", "../..")), path_tokens),
     )
     if configured_workspace_root != workspace_root.resolve():
         raise SchedulerError(
@@ -143,10 +256,14 @@ def load_agent_spec(config_path: Path, workspace_root: Path) -> AgentSpec:
         )
 
     runtime_dir = resolve_agent_path(
-        workspace_root, agent_dir, str(paths_payload.get("runtime_root", "runtime"))
+        workspace_root,
+        agent_dir,
+        render_path_template(str(paths_payload.get("runtime_root", "runtime")), path_tokens),
     )
     launchers_root_dir = resolve_agent_path(
-        workspace_root, agent_dir, str(paths_payload.get("launcher_root", "runtime/launchers"))
+        workspace_root,
+        agent_dir,
+        render_path_template(str(paths_payload.get("launcher_root", "runtime/launchers")), path_tokens),
     )
 
     task_payload = payload.get("task")
@@ -165,12 +282,20 @@ def load_agent_spec(config_path: Path, workspace_root: Path) -> AgentSpec:
     launcher_config = launcher_payload.get("config", {})
     if not isinstance(launcher_config, dict):
         raise SchedulerError("launcher.config must be an object.")
+    merged_launcher_config = dict(launcher_config)
+    merged_launcher_config["model"] = settings.model_for_agent(
+        slug=slug,
+        configured_model=str(launcher_config.get("model", "")).strip() or None,
+    )
 
     dependencies = [str(value) for value in payload.get("dependencies", [])]
     wakeup = payload.get("wakeup", {})
     if not isinstance(wakeup, dict):
         raise SchedulerError("wakeup must be an object.")
-    wakeup_globs = [str(value) for value in wakeup.get("watch_globs", [])]
+    wakeup_globs = [
+        render_path_template(str(value), path_tokens)
+        for value in wakeup.get("watch_globs", [])
+    ]
 
     return AgentSpec(
         name=name,
@@ -183,7 +308,7 @@ def load_agent_spec(config_path: Path, workspace_root: Path) -> AgentSpec:
         dependencies=dependencies,
         wakeup_globs=wakeup_globs,
         launcher_kind=launcher_kind,
-        launcher_config=dict(launcher_config),
+        launcher_config=merged_launcher_config,
         runtime_dir=runtime_dir,
         scheduler_state_file=runtime_dir / "scheduler-state.json",
         runtime_state_dir=runtime_dir / "state",
@@ -193,10 +318,14 @@ def load_agent_spec(config_path: Path, workspace_root: Path) -> AgentSpec:
     )
 
 
-def load_all_agent_specs(agents_dir: Path, workspace_root: Path) -> list[AgentSpec]:
+def load_all_agent_specs(
+    agents_dir: Path,
+    workspace_root: Path,
+    settings: SchedulerSettings,
+) -> list[AgentSpec]:
     specs: list[AgentSpec] = []
     for config_path in sorted(agents_dir.glob("*/agent.json")):
-        specs.append(load_agent_spec(config_path, workspace_root))
+        specs.append(load_agent_spec(config_path, workspace_root, settings))
     if not specs:
         raise SchedulerError(f"No agent.json files were found under {agents_dir}")
     return sorted(specs, key=lambda spec: (spec.order, spec.slug))
@@ -217,13 +346,54 @@ def ensure_agent_directories(spec: AgentSpec) -> None:
         ensure_directory(path)
 
 
+def snapshot_workspace_globs(
+    workspace_root: Path,
+    patterns: list[str],
+) -> dict[str, tuple[int, int]]:
+    snapshot: dict[str, tuple[int, int]] = {}
+    for pattern in patterns:
+        for path in expand_glob_pattern(workspace_root, pattern):
+            if path.is_dir():
+                continue
+            stat = path.stat()
+            snapshot[relative_to_workspace(workspace_root, path)] = (stat.st_mtime_ns, stat.st_size)
+    return snapshot
+
+
+def expand_glob_pattern(workspace_root: Path, pattern: str) -> list[Path]:
+    requested = Path(pattern)
+    search_pattern = pattern if requested.is_absolute() else str((workspace_root / pattern).resolve())
+    return sorted(Path(match).resolve() for match in glob.glob(search_pattern))
+
+
+def detect_snapshot_changes(
+    before: dict[str, tuple[int, int]],
+    after: dict[str, tuple[int, int]],
+) -> list[str]:
+    return sorted(path for path, marker in after.items() if before.get(path) != marker)
+
+
+def build_required_artifact_patterns(
+    spec: AgentSpec,
+    workspace_root: Path,
+    settings: SchedulerSettings,
+) -> list[str]:
+    if spec.slug not in settings.artifact_contract_agents:
+        return []
+    work_orders_pattern = relative_to_workspace(workspace_root, spec.runtime_work_orders_dir).replace("\\", "/")
+    runtime_state_path = relative_to_workspace(
+        workspace_root,
+        spec.runtime_state_dir / "runtime-state.json",
+    ).replace("\\", "/")
+    return [f"{work_orders_pattern}/*.json", runtime_state_path]
+
+
 def compute_input_fingerprint(spec: AgentSpec, workspace_root: Path) -> str | None:
     if not spec.wakeup_globs:
         return None
     rows: list[str] = []
     for pattern in spec.wakeup_globs:
-        normalized = pattern.replace("\\", "/")
-        for path in sorted(workspace_root.glob(normalized)):
+        for path in expand_glob_pattern(workspace_root, pattern):
             if path.is_dir():
                 continue
             stat = path.stat()
@@ -250,23 +420,36 @@ def should_wake_due_to_inputs(state: dict[str, Any], current_fingerprint: str | 
     return current_fingerprint != previous
 
 
-def normalize_task_payload(spec: AgentSpec, workspace_root: Path) -> dict[str, Any]:
+def normalize_task_payload(
+    spec: AgentSpec,
+    workspace_root: Path,
+    settings: SchedulerSettings,
+) -> dict[str, Any]:
     payload = dict(spec.task_payload)
     payload["id"] = str(payload.get("id", "")).strip() or spec.slug
+    path_tokens = settings.path_tokens()
 
-    system_prompt_path = str(payload.get("system_prompt_path", "")).strip()
+    system_prompt_path = render_path_template(str(payload.get("system_prompt_path", "")).strip(), path_tokens)
     if system_prompt_path:
-        payload["system_prompt_path"] = relative_to_workspace(
-            workspace_root,
-            resolve_agent_path(workspace_root, spec.agent_dir, system_prompt_path),
-        )
+        resolved_prompt_path = resolve_task_reference_path(workspace_root, spec.agent_dir, system_prompt_path)
+        if not resolved_prompt_path.exists():
+            raise SchedulerError(f"System prompt file not found for {spec.slug}: {system_prompt_path}")
+        if not resolved_prompt_path.is_file():
+            raise SchedulerError(f"System prompt path is not a file for {spec.slug}: {system_prompt_path}")
+        payload["system_prompt_path"] = relative_to_workspace(workspace_root, resolved_prompt_path)
 
     normalized_memory_paths: list[str] = []
     for raw_path in payload.get("memory_paths", []):
+        rendered_path = render_path_template(str(raw_path), path_tokens)
+        resolved_memory_path = resolve_task_reference_path(workspace_root, spec.agent_dir, rendered_path)
+        if not resolved_memory_path.exists():
+            raise SchedulerError(f"Memory path not found for {spec.slug}: {rendered_path}")
+        if not resolved_memory_path.is_file():
+            raise SchedulerError(f"Memory path is not a file for {spec.slug}: {rendered_path}")
         normalized_memory_paths.append(
             relative_to_workspace(
                 workspace_root,
-                resolve_agent_path(workspace_root, spec.agent_dir, str(raw_path)),
+                resolved_memory_path,
             )
         )
     payload["memory_paths"] = normalized_memory_paths
@@ -278,14 +461,20 @@ def build_dynamic_extra_context(
     workspace_root: Path,
     spec_lookup: dict[str, AgentSpec],
     trigger_reason: str,
+    settings: SchedulerSettings,
 ) -> str:
     runner_workspace_dir = spec.launchers_root_dir / spec.launcher_kind
     lines = [
         f"Agent home: {relative_to_workspace(workspace_root, spec.agent_dir)}",
+        f"Shared memory root: {settings.memory_root}",
+        f"Daily notes dir: {settings.daily_notes_dir}",
+        f"Doc dir: {settings.doc_dir}",
+        f"SOP dir: {settings.sop_dir}",
         f"Runtime state dir: {relative_to_workspace(workspace_root, spec.runtime_state_dir)}",
         f"Runtime work-orders dir: {relative_to_workspace(workspace_root, spec.runtime_work_orders_dir)}",
         f"Runtime reports dir: {relative_to_workspace(workspace_root, spec.runtime_reports_dir)}",
         f"Runner kind: {spec.launcher_kind}",
+        f"Runner model: {spec.launcher_config.get('model', '<unset>')}",
         f"Runner workspace dir: {relative_to_workspace(workspace_root, runner_workspace_dir)}",
         f"Wake reason: {trigger_reason}",
         "main.py only handles wakeup and coordination. You must inspect your relevant scope yourself and decide the concrete processing set.",
@@ -315,14 +504,15 @@ def build_task_instance(
     workspace_root: Path,
     spec_lookup: dict[str, AgentSpec],
     trigger_reason: str,
+    settings: SchedulerSettings,
 ) -> tuple[TaskDefinition, dict[str, Any]]:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    payload = normalize_task_payload(spec, workspace_root)
+    payload = normalize_task_payload(spec, workspace_root, settings)
     template_id = str(payload.get("id", spec.slug))
     task_id = f"{template_id}-{timestamp}"
     payload["id"] = task_id
     base_extra_context = str(payload.get("extra_context", "")).strip()
-    dynamic_extra = build_dynamic_extra_context(spec, workspace_root, spec_lookup, trigger_reason)
+    dynamic_extra = build_dynamic_extra_context(spec, workspace_root, spec_lookup, trigger_reason, settings)
     if base_extra_context:
         payload["extra_context"] = base_extra_context + "\n\n" + dynamic_extra
     else:
@@ -400,16 +590,27 @@ def run_agent_once(
     spec_lookup: dict[str, AgentSpec],
     trigger_reason: str,
     input_fingerprint: str | None,
+    settings: SchedulerSettings,
 ) -> dict[str, Any]:
     ensure_agent_directories(spec)
     state = load_scheduler_state(spec.scheduler_state_file)
-    task, task_payload = build_task_instance(spec, workspace_root, spec_lookup, trigger_reason)
+    task, task_payload = build_task_instance(spec, workspace_root, spec_lookup, trigger_reason, settings)
     request = build_execution_request(spec, workspace_root, task, trigger_reason, spec_lookup)
+    required_artifact_patterns = build_required_artifact_patterns(spec, workspace_root, settings)
+    artifact_snapshot_before = snapshot_workspace_globs(workspace_root, required_artifact_patterns)
+    must_write_artifacts = should_wake_due_to_inputs(state, input_fingerprint)
     try:
         runner = get_runner(spec.launcher_kind)
     except ValueError as exc:
         raise SchedulerError(str(exc)) from exc
     result = runner.run(request)
+    artifact_snapshot_after = snapshot_workspace_globs(workspace_root, required_artifact_patterns)
+    artifact_changes = detect_snapshot_changes(artifact_snapshot_before, artifact_snapshot_after)
+    if must_write_artifacts and required_artifact_patterns and not artifact_changes:
+        checked_patterns = ", ".join(required_artifact_patterns)
+        raise SchedulerError(
+            f"{spec.slug} finished without updating required runtime artifacts. Checked: {checked_patterns}"
+        )
 
     state = record_scheduler_state(
         spec=spec,
@@ -435,163 +636,109 @@ def run_agent_once(
         "run_count": state["run_count"],
         "trigger_reason": trigger_reason,
     }
+    payload_result["runtime_artifacts"] = {
+        "enforced": must_write_artifacts and bool(required_artifact_patterns),
+        "required_patterns": required_artifact_patterns,
+        "changed_paths": artifact_changes,
+    }
     payload_result["task"] = task_payload
     return payload_result
 
 
-def resolve_agent_by_name(specs: list[AgentSpec], name: str) -> AgentSpec:
-    matches = [spec for spec in specs if spec.slug == name or spec.name == name]
-    if not matches:
-        raise SchedulerError(f"No agent found for name: {name}")
-    if len(matches) > 1:
-        raise SchedulerError(f"Multiple agents matched name: {name}")
-    return matches[0]
-
-
-def run_list_command(args: argparse.Namespace) -> int:
-    workspace_root = Path(args.workspace_root).resolve()
-    agents_dir = resolve_workspace_path(workspace_root, args.agents_dir)
-    specs = load_all_agent_specs(agents_dir, workspace_root)
-    rows: list[dict[str, Any]] = []
+def run_orchestration_cycle(
+    workspace_root: Path,
+    specs: list[AgentSpec],
+    spec_lookup: dict[str, AgentSpec],
+    settings: SchedulerSettings,
+    trigger_reason: str,
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    emit_monitor(f"Starting orchestration cycle across {len(specs)} agent(s).")
     for spec in specs:
         state = load_scheduler_state(spec.scheduler_state_file)
-        rows.append(
-            {
-                "id": spec.slug,
-                "name": spec.name,
-                "enabled": spec.enabled,
-                "order": spec.order,
-                "launcher_kind": spec.launcher_kind,
-                "config_path": relative_to_workspace(workspace_root, spec.config_path),
-                "agent_dir": relative_to_workspace(workspace_root, spec.agent_dir),
-                "runtime_dir": relative_to_workspace(workspace_root, spec.runtime_dir),
-                "scheduler_state_file": relative_to_workspace(workspace_root, spec.scheduler_state_file),
-                "launchers_root_dir": relative_to_workspace(workspace_root, spec.launchers_root_dir),
-                "dependencies": spec.dependencies,
-                "wakeup_globs": spec.wakeup_globs,
-                "run_count": state.get("run_count", 0),
-            }
-        )
-    print(json.dumps(rows, ensure_ascii=False, indent=2))
-    return 0
-
-
-def run_single_agent_command(args: argparse.Namespace) -> int:
-    workspace_root = Path(args.workspace_root).resolve()
-    agents_dir = resolve_workspace_path(workspace_root, args.agents_dir)
-    specs = load_all_agent_specs(agents_dir, workspace_root)
-    spec_lookup = build_spec_lookup(specs)
-    spec = resolve_agent_by_name(specs, args.agent)
-    if not spec.enabled and not args.include_disabled:
-        raise SchedulerError(f"Agent is disabled: {spec.name}")
-    result = run_agent_once(
-        workspace_root=workspace_root,
-        spec=spec,
-        spec_lookup=spec_lookup,
-        trigger_reason="manual run requested from main.py",
-        input_fingerprint=compute_input_fingerprint(spec, workspace_root),
-    )
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0
-
-
-def watch_single_agent_command(args: argparse.Namespace) -> int:
-    workspace_root = Path(args.workspace_root).resolve()
-    agents_dir = resolve_workspace_path(workspace_root, args.agents_dir)
-    specs = load_all_agent_specs(agents_dir, workspace_root)
-    spec_lookup = build_spec_lookup(specs)
-    spec = resolve_agent_by_name(specs, args.agent)
-    if not spec.enabled and not args.include_disabled:
-        raise SchedulerError(f"Agent is disabled: {spec.name}")
-
-    runs = 0
-    while True:
-        state = load_scheduler_state(spec.scheduler_state_file)
         input_fingerprint = compute_input_fingerprint(spec, workspace_root)
-        if should_wake_due_to_inputs(state, input_fingerprint):
-            result = run_agent_once(
-                workspace_root=workspace_root,
-                spec=spec,
-                spec_lookup=spec_lookup,
-                trigger_reason="watched inputs changed; inspect your scope yourself",
-                input_fingerprint=input_fingerprint,
+        if not should_wake_due_to_inputs(state, input_fingerprint):
+            emit_monitor(
+                f"[{spec.slug}] no watched-input change detected; skipping."
             )
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            runs += 1
-            if args.max_runs and runs >= args.max_runs:
-                return 0
             continue
+        emit_monitor(
+            f"[{spec.slug}] input change detected; launching {spec.launcher_kind} "
+            f"with model {spec.launcher_config.get('model', '<unset>')}."
+        )
+        started_at = time.monotonic()
+        result = run_agent_once(
+            workspace_root=workspace_root,
+            spec=spec,
+            spec_lookup=spec_lookup,
+            trigger_reason=trigger_reason,
+            input_fingerprint=input_fingerprint,
+            settings=settings,
+        )
+        elapsed_seconds = max(0.0, time.monotonic() - started_at)
+        changed_artifacts = result.get("runtime_artifacts", {}).get("changed_paths", [])
+        if isinstance(changed_artifacts, list) and changed_artifacts:
+            artifact_summary = ", ".join(str(path) for path in changed_artifacts)
+        else:
+            artifact_summary = "no tracked runtime artifact changes"
+        emit_monitor(
+            f"[{spec.slug}] completed in {elapsed_seconds:.1f}s; artifacts: {artifact_summary}."
+        )
+        results.append(result)
+    emit_monitor(f"Orchestration cycle finished; {len(results)} agent(s) executed.")
+    return results
 
-        if args.once:
-            return 0
-        time.sleep(args.sleep_seconds)
 
-
-def watch_all_agents_command(args: argparse.Namespace) -> int:
-    workspace_root = Path(args.workspace_root).resolve()
-    agents_dir = resolve_workspace_path(workspace_root, args.agents_dir)
-    specs = load_all_agent_specs(agents_dir, workspace_root)
+def run_orchestrator_command(args: argparse.Namespace) -> int:
+    config_path = Path(args.config).resolve()
+    settings = load_scheduler_settings(config_path)
+    workspace_root = WORKSPACE_ROOT
+    agents_dir = SCRIPT_DIR
+    specs = load_all_agent_specs(agents_dir, workspace_root, settings)
     spec_lookup = build_spec_lookup(specs)
-    if not args.include_disabled:
-        specs = [spec for spec in specs if spec.enabled]
+    specs = [spec for spec in specs if spec.enabled]
     if not specs:
-        raise SchedulerError("No enabled agents are available to watch.")
+        raise SchedulerError("No enabled agents are available for orchestration.")
+    emit_monitor(f"Loaded config: {config_path}")
+    emit_monitor(
+        f"Watch mode: {'on' if settings.watch else 'off'}; "
+        f"poll interval: {settings.sleep_seconds}s; memory root: {settings.memory_root}."
+    )
+    emit_monitor(
+        "Enabled agents in order: "
+        + " -> ".join(spec.slug for spec in specs)
+    )
 
-    runs = 0
     while True:
-        ran_any = False
-        for spec in specs:
-            state = load_scheduler_state(spec.scheduler_state_file)
-            input_fingerprint = compute_input_fingerprint(spec, workspace_root)
-            if not should_wake_due_to_inputs(state, input_fingerprint):
-                continue
-            result = run_agent_once(
-                workspace_root=workspace_root,
-                spec=spec,
-                spec_lookup=spec_lookup,
-                trigger_reason="main.py detected changed watched inputs; inspect your scope yourself",
-                input_fingerprint=input_fingerprint,
-            )
-            print(json.dumps(result, ensure_ascii=False, indent=2))
-            runs += 1
-            ran_any = True
-            if args.max_runs and runs >= args.max_runs:
-                return 0
-        if args.once:
+        cycle_results = run_orchestration_cycle(
+            workspace_root=workspace_root,
+            specs=specs,
+            spec_lookup=spec_lookup,
+            settings=settings,
+            trigger_reason="main.py orchestrated the notes->doc->sop chain",
+        )
+        if cycle_results:
+            print(json.dumps(cycle_results, ensure_ascii=False, indent=2))
+        elif not settings.watch:
+            emit_monitor("No agents needed work in this pass; exiting.")
+            print("[]")
             return 0
-        if not ran_any:
-            time.sleep(args.sleep_seconds)
+        if not settings.watch:
+            return 0
+        if not cycle_results:
+            emit_monitor(f"No changes detected; sleeping for {settings.sleep_seconds}s.")
+            time.sleep(settings.sleep_seconds)
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run the agent system under /agents with runner-agnostic orchestration."
+        description="Orchestrate the full notes->doc->sop agent chain from a config file."
     )
-    parser.add_argument("--workspace-root", default=str(WORKSPACE_ROOT))
-    parser.add_argument("--agents-dir", default=DEFAULT_AGENTS_DIR)
-    parser.add_argument("--sleep-seconds", type=float, default=DEFAULT_POLL_SECONDS)
-    parser.add_argument("--include-disabled", action="store_true")
-
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    list_parser = subparsers.add_parser("list", help="List all agent configs and runtime state.")
-    list_parser.add_argument("--agents-dir", default=DEFAULT_AGENTS_DIR)
-
-    run_parser = subparsers.add_parser("run", help="Run one agent immediately.")
-    run_parser.add_argument("--agents-dir", default=DEFAULT_AGENTS_DIR)
-    run_parser.add_argument("--agent", required=True)
-
-    watch_parser = subparsers.add_parser("watch", help="Poll watched inputs for one agent.")
-    watch_parser.add_argument("--agents-dir", default=DEFAULT_AGENTS_DIR)
-    watch_parser.add_argument("--agent", required=True)
-    watch_parser.add_argument("--once", action="store_true")
-    watch_parser.add_argument("--max-runs", type=int, default=0)
-
-    watch_all_parser = subparsers.add_parser("watch-all", help="Poll watched inputs and orchestrate all enabled agents.")
-    watch_all_parser.add_argument("--agents-dir", default=DEFAULT_AGENTS_DIR)
-    watch_all_parser.add_argument("--once", action="store_true")
-    watch_all_parser.add_argument("--max-runs", type=int, default=0)
-
+    parser.add_argument(
+        "--config",
+        default=str(DEFAULT_CONFIG_PATH),
+        help="Path to the scheduler config file (.json, .yaml, or .yml).",
+    )
     return parser
 
 
@@ -599,15 +746,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        if args.command == "list":
-            return run_list_command(args)
-        if args.command == "run":
-            return run_single_agent_command(args)
-        if args.command == "watch":
-            return watch_single_agent_command(args)
-        if args.command == "watch-all":
-            return watch_all_agents_command(args)
-        raise SchedulerError(f"Unknown command: {args.command}")
+        return run_orchestrator_command(args)
     except SchedulerError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

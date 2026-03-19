@@ -236,6 +236,10 @@ def format_codex_trace_prompt(task: TaskSpec, workspace_root: Path) -> str:
             "This is a Codex session task.",
             "Do only the work needed for this task.",
             "Do not broaden the task.",
+            "Read the requested files first, then complete the task in the workspace.",
+            "If the task requires runtime artifacts, write them before you answer.",
+            "This repository contains UTF-8 Chinese markdown.",
+            "When you use PowerShell to read files, prefer `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content -Raw -Encoding UTF8 <path>`.",
             "You may create or modify files if the task requires it." if task.allow_file_edits else "Do not create or modify files.",
             "",
             f"Task id: {task.id}",
@@ -244,16 +248,25 @@ def format_codex_trace_prompt(task: TaskSpec, workspace_root: Path) -> str:
         ]
     )
     if task.memory_paths:
-        sections.append("Read the requested files, then return a very short summary.")
+        sections.append("Read the requested files before making decisions.")
         sections.append("Read exactly these files first:")
         sections.extend(f"- {path}" for path in task.memory_paths)
     else:
-        sections.append("If the task does not require files, answer directly with the minimum necessary text.")
+        sections.append("If the task does not require files, still complete the requested action before answering.")
     if task.extra_context:
         sections.extend(["", f"Extra context: {task.extra_context}"])
     sections.append("")
     sections.append("Output requirement:")
-    if task.memory_paths:
+    if task.allow_file_edits:
+        sections.extend(
+            [
+                "- 2 to 4 short sentences",
+                "- finish the required file writes or runtime artifact updates before replying",
+                "- mention the exact files or artifact paths you created or updated",
+                "- if you intentionally made no changes, explain why in one sentence",
+            ]
+        )
+    elif task.memory_paths:
         sections.extend(
             [
                 "- 2 to 4 short sentences",

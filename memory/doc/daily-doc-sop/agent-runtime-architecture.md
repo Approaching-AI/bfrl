@@ -35,6 +35,22 @@ The unified entrypoint is:
 
 - `agents/main.py`
 
+## Shared Scheduler Config
+
+Some runtime settings belong to the scheduler as a whole rather than any one agent. These live in:
+
+- `agents/config.yaml`
+
+Current shared settings include:
+
+- `watch`
+- `sleep_seconds`
+- `memory_root`
+- `default_model`
+- `agent_models`
+
+This keeps `agent.json` focused on agent-local task and launcher wiring while the scheduler owns shared runtime policy.
+
 ## Why `agents/main.py`
 
 The scheduler is placed under `agents/` because the runtime is itself part of the agent system rather than part of the historical demo area.
@@ -71,6 +87,8 @@ Under `task`:
 - `allow_file_edits`
 
 This keeps the agent task declarative, similar to the demo task file.
+
+Real Codex runs later validated that `system_prompt_path` and `allow_file_edits` are operational requirements rather than decorative metadata: without a tighter task contract and explicit write permission, the session can spend its window exploring instead of producing the expected runtime artifacts.
 
 ### 3. Launcher Contract
 
@@ -140,6 +158,20 @@ This is intentionally simple:
 - watched inputs reduce latency after upstream changes
 - agents themselves do not each maintain their own poll loop
 
+The watched-input path layer must also support an absolute external `memory_root`, because the long-term memory tree may live outside the repository even when the agent runtime remains under `agents/`.
+
+## Artifact Contract Enforcement
+
+Formal chain agents may be held to a scheduler-level artifact contract:
+
+- `note-relation`
+- `doc-maintenance`
+- `sop-promotion`
+
+If one of these agents is woken by changed inputs, success is not just "the session ended." The run should also leave a machine-readable artifact such as a downstream work order or an updated semantic state file.
+
+This enforcement belongs in the scheduler because it validates runtime side effects, while the agent still owns the content of those artifacts.
+
 ## Dependency Model
 
 Dependencies are declared explicitly in `agent.json`.
@@ -167,6 +199,8 @@ This avoids two common sources of drift:
 - writing config relative to the repository root in some places and the agent folder in others
 - making `system.md` or design document paths silently break when the runtime is moved out of `demo/`
 
+This normalization boundary is different from `memory_root`: agent-local paths stay relative to the agent, while the shared memory root may now be an absolute path outside the repo and must remain valid during watched-input globbing.
+
 ## Orchestration Boundary
 
 `main.py` wakes agents, but does not rigidly assign the exact note or work-order subset they must process.
@@ -178,7 +212,7 @@ After wakeup, each agent still:
 - decides the concrete processing set
 - applies its own domain judgment
 
-This keeps orchestration centralized without over-constraining the agents.
+This keeps orchestration centralized without over-constraining the agents. The scheduler may verify that runtime artifacts were written, but it still should not decide which note, doc, or SOP item the agent must touch.
 
 ## Relationship To The Demo
 
@@ -190,6 +224,8 @@ The first formal runtime migration is:
 - launcher adapters introduced under `agents/runners/`
 - the current Codex implementation wrapped as one launcher adapter
 - per-agent state moved to `agents/<agent-id>/runtime/`
+
+As of `2026-03-19`, the Codex-backed demo has exercised this contract in real write-capable runs: source and audit agents wrote their own state and reports, reruns validated idempotent state handling, and a scratch `fail -> refresh -> pass` loop confirmed that the runtime separation works in practice. This is implementation evidence for the architecture, not a change to the formal boundary that keeps the demo outside the long-term memory layers.
 
 ## Current Scope
 

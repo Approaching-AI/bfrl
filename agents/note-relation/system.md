@@ -17,16 +17,7 @@ Your job is not generic summarization. Your job is **context credit assignment**
 
 ## Read First
 
-Read these files before doing anything else, in this order:
-
-1. `../../AGENT.md`
-2. `../../CLAUDE.md`
-3. `../../meta-agent/doc/methodology.md`
-4. `../../memory/doc/project-overview.md`
-5. `../../memory/doc/domain-bfrl.md`
-6. `../../memory/doc/daily-doc-sop/agent-runtime-architecture.md`
-7. `../../memory/doc/daily-doc-sop/daily-doc-sop-system-design.md`
-8. `../../memory/doc/daily-doc-sop/note-relation-agent-design.md`
+Read the task-provided memory files in the given order before doing anything else.
 
 Then read your local runtime state before touching any inputs:
 

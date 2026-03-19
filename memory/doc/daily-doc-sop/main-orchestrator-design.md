@@ -16,17 +16,29 @@ The three domain agents should not each run their own polling loop. That would:
 - duplicate wakeup logic
 - blur responsibility between orchestration and domain work
 
+## Public CLI Surface
+
+The public entrypoint should stay config-driven:
+
+- `python agents/main.py`
+- `python agents/main.py --config agents/config.yaml`
+
+The formal CLI should not expose per-agent debug switches as part of its stable surface. Manual or forced runs may still exist internally, but the public contract stays centered on loading one scheduler config and then letting the scheduler decide which agents to wake.
+
 ## What `main.py` Does
 
 `main.py` is responsible for:
 
 1. discovering `agents/*/agent.json`
-2. loading dependency order
-3. polling watched inputs
-4. detecting whether watched inputs have changed
-5. waking the right agent at the right time
-6. passing runtime context to the selected launcher
-7. recording scheduler state
+2. loading shared scheduler config from `agents/config.yaml`
+3. loading dependency order
+4. polling watched inputs
+5. supporting both workspace-relative paths and an absolute external `memory_root` during watched-input scanning
+6. detecting whether watched inputs have changed
+7. waking the right agent at the right time
+8. passing runtime context to the selected launcher
+9. validating required runtime artifacts for formal chain agents
+10. recording scheduler state
 
 ## What `main.py` Does Not Do
 
@@ -40,6 +52,23 @@ The three domain agents should not each run their own polling loop. That would:
 
 Its role is wakeup and coordination, not domain cognition.
 
+## Shared Scheduler Config
+
+Shared runtime settings belong in `agents/config.yaml`, not in hard-coded constants and not in each `agent.json`.
+
+Current shared settings include:
+
+- `watch`
+- `sleep_seconds`
+- `memory_root`
+- `default_model`
+- `agent_models`
+
+This keeps one boundary clear:
+
+- `agents/config.yaml` owns scheduler-wide runtime policy
+- `agent.json` owns agent-local task, wakeup, and launcher declarations
+
 ## Wakeup Model
 
 Each agent declares `wakeup.watch_globs` in `agent.json`.
@@ -51,6 +80,23 @@ Examples:
 - `SOP Promotion Agent` watches `agents/doc-maintenance/runtime/work-orders/*.json`
 
 `main.py` polls these globs, computes an input fingerprint, and wakes the agent only when the watched input set changes.
+
+When the shared `memory_root` points outside the repository, the same wakeup logic must still work for absolute paths rather than assuming every watched input is workspace-relative.
+
+## Monitor Output
+
+The scheduler should emit human-readable monitor lines that make the runtime state legible without opening JSON files.
+
+Useful monitor output includes:
+
+- which config file was loaded
+- whether watch mode is enabled
+- the current agent order
+- whether an agent was skipped or launched
+- the runner kind and model used for a launch
+- elapsed time
+- which runtime artifacts changed
+- whether the scheduler is sleeping because nothing changed
 
 ## Important Boundary
 
@@ -85,6 +131,17 @@ This file tracks only orchestration concerns such as:
 - last trigger reason
 
 It is not the same as the agent's own semantic state under `runtime/state/`.
+
+## Runtime Artifact Enforcement
+
+For formal chain agents such as `note-relation`, `doc-maintenance`, and `sop-promotion`, a successful wakeup should produce machine-readable runtime artifacts.
+
+At minimum, the scheduler can require evidence that the run wrote one of:
+
+- `runtime/work-orders/*.json`
+- `runtime/state/runtime-state.json`
+
+This enforcement belongs to orchestration rather than domain logic. It checks whether the session produced consumable runtime outputs, not whether the agent's reasoning was correct.
 
 ## Execution Order
 
