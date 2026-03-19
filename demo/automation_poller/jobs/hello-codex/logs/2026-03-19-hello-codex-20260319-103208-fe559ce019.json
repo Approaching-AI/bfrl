@@ -1,0 +1,71 @@
+{
+  "session_id": "fe559ce019",
+  "created_at": "2026-03-19T10:32:08+08:00",
+  "adapter": "mock",
+  "session_style": "tool-loop",
+  "task": {
+    "id": "hello-codex-20260319-103208",
+    "title": "最小轮询任务",
+    "goal": "hi!",
+    "memory_paths": [],
+    "extra_context": "这是一个最小自动化轮询示例，用来验证定时触发和任务归档流程。"
+  },
+  "state": {
+    "shell_name": "powershell",
+    "usage_view": "raw",
+    "prompt_text": "Task id: hello-codex-20260319-103208\n\nTitle: 最小轮询任务\n\nGoal: hi!\n\nExtra context: 这是一个最小自动化轮询示例，用来验证定时触发和任务归档流程。\n\nPlease inspect the workspace with tools before answering. If you discover something reusable, save a concise daily note.",
+    "model": "mock-local",
+    "usage_summary": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "note": "No API call was made. This turn was produced by the local mock adapter."
+    },
+    "daily_note_path": "demo\\automation_poller\\jobs\\hello-codex\\notes\\2026-03-19-01.md"
+  },
+  "trace": [
+    {
+      "timestamp": "2026-03-19T10:32:08+08:00",
+      "turn_index": 1,
+      "response_id": "mock_resp_1",
+      "model": "mock-local",
+      "status": "completed",
+      "output_text": "",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "note": "No API call was made. This turn was produced by the local mock adapter."
+      },
+      "function_calls": [
+        {
+          "call_id": "mock_call_1",
+          "name": "append_daily_note",
+          "arguments": {
+            "title": "Demo session note for hello-codex-20260319-103208",
+            "body": "This note was created by the mock Codex session demo.\n\nTask goal: hi!\n\nFiles inspected:\n\nExtra context: 这是一个最小自动化轮询示例，用来验证定时触发和任务归档流程。"
+          },
+          "output": {
+            "note_path": "demo\\automation_poller\\jobs\\hello-codex\\notes\\2026-03-19-01.md"
+          }
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-03-19T10:32:08+08:00",
+      "turn_index": 2,
+      "response_id": "mock_resp_2",
+      "model": "mock-local",
+      "status": "completed",
+      "output_text": "Session completed for task `hello-codex-20260319-103208`.\n- inspected_files: 0\n- daily_note: demo\\automation_poller\\jobs\\hello-codex\\notes\\2026-03-19-01.md\n- next customization point: swap the mock adapter for the OpenAI Responses adapter.",
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "note": "No API call was made. This turn was produced by the local mock adapter."
+      },
+      "function_calls": []
+    }
+  ],
+  "final_text": "Session completed for task `hello-codex-20260319-103208`.\n- inspected_files: 0\n- daily_note: demo\\automation_poller\\jobs\\hello-codex\\notes\\2026-03-19-01.md\n- next customization point: swap the mock adapter for the OpenAI Responses adapter."
+}

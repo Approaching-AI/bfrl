@@ -1,0 +1,17 @@
+{
+  "name": "hello-codex",
+  "enabled": true,
+  "poll_interval_seconds": 15,
+  "task_file": "demo/automation_poller/tasks/hello-task.json",
+  "runner": {
+    "mode": "mock",
+    "session_style": "tool-loop",
+    "model": "gpt-5.4",
+    "max_turns": 4,
+    "shell": "powershell",
+    "usage_view": "raw",
+    "codex_prompt_mode": "trace",
+    "background": false,
+    "reasoning_effort": "medium"
+  }
+}

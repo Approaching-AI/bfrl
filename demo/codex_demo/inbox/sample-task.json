@@ -1,0 +1,10 @@
+{
+  "id": "demo-codex-session-001",
+  "title": "梳理一次 codex session 的执行流",
+  "goal": "你是一个非常有用的 agent。你需要仔细完成用户交给你的任务。请你阅读项目总览和 memory layout 设计，然后输出一个极简总结，最后把总结写入 daily note。",
+  "memory_paths": [
+    "memory/doc/project-overview.md",
+    "docs/specs/2026-03-18-memory-layout-design.md"
+  ],
+  "extra_context": "重点关注 session loop、memory、polling 三层之间的关系。"
+}

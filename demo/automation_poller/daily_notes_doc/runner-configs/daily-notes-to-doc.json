@@ -1,0 +1,18 @@
+{
+  "name": "daily-notes-to-doc-real",
+  "enabled": true,
+  "poll_interval_seconds": 20,
+  "task_file": "demo/automation_poller/daily_notes_doc/runner-tasks/daily-notes-to-doc-task.json",
+  "job_dir": "demo/automation_poller/daily_notes_doc/runner-jobs/daily-notes-to-doc-real",
+  "runner": {
+    "mode": "codex",
+    "session_style": "tool-loop",
+    "model": "gpt-5.4",
+    "max_turns": 1,
+    "shell": "powershell",
+    "usage_view": "raw",
+    "codex_prompt_mode": "trace",
+    "background": false,
+    "reasoning_effort": "medium"
+  }
+}

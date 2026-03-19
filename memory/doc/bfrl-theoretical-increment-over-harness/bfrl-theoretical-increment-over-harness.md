@@ -2,6 +2,12 @@
 
 ## 摘要
 
+这里先补一个术语背景，避免误解：
+
+> `Harness Engineering` 本身就是 AI agent 领域里一个非常新的提法。当前可见的直接命名源头，是 OpenAI 于 2026 年 2 月 11 日发布的《Harness engineering: leveraging Codex in an agent-first world》；几天后，Thoughtworks 于 2026 年 2 月 17 日跟进讨论，并明确把它称为一个“only 2 weeks old”的新词。
+
+因此，本文所说的 Harness Engineering，不是一个已经稳定几十年的既有学派名词，而是最近才被快速显化、正在被行业吸收和解释的一组 agent engineering 实践的名字。
+
 Harness Engineering 已经展示出一条非常清晰的工程路线：当模型足够强时，决定 agent 上限的关键因素不再只是模型参数本身，而是环境、上下文、约束、验证、记忆与反馈回路的设计。它首先回答的是一个工程问题：**怎样让 agent 在真实世界里稳定、可控、可维护地工作。**
 
 BFRL（Backward Free Reinforcement Learning） 继承这一点，但它试图继续回答另一个更上位的问题：**如果 agent 的行为主要由 context、memory、tool use 和环境反馈来塑造，那么这些东西能否承担传统 RL 中一部分原本由 weight update 承担的职责？**

@@ -1,0 +1,10 @@
+{
+  "id": "memory-layout-summary",
+  "title": "轮询总结 memory layout",
+  "goal": "阅读指定文件，输出一段简短总结，并把总结写入 note。",
+  "memory_paths": [
+    "memory/doc/project-overview.md",
+    "docs/specs/2026-03-18-memory-layout-design.md"
+  ],
+  "extra_context": "重点关注 session loop、memory 和 polling 三层之间的关系。"
+}

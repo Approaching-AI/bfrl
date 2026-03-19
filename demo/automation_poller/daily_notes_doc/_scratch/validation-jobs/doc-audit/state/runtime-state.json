@@ -1,0 +1,11 @@
+{
+  "run_count": 3,
+  "last_run_started_at": "2026-03-19T10:33:57+08:00",
+  "last_run_finished_at": "2026-03-19T10:33:57+08:00",
+  "next_run_at": "2026-03-19T10:34:17+08:00",
+  "last_status": "pass",
+  "processed_notes": [],
+  "last_processed_note": null,
+  "last_report_path": "demo\\automation_poller\\daily_notes_doc\\_scratch\\validation-jobs\\doc-audit\\reports\\2026-03-19-103357-doc-audit.md",
+  "last_findings": []
+}

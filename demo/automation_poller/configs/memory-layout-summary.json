@@ -1,0 +1,17 @@
+{
+  "name": "memory-layout-summary",
+  "enabled": true,
+  "poll_interval_seconds": 30,
+  "task_file": "demo/automation_poller/tasks/memory-layout-task.json",
+  "runner": {
+    "mode": "mock",
+    "session_style": "tool-loop",
+    "model": "gpt-5.4",
+    "max_turns": 8,
+    "shell": "powershell",
+    "usage_view": "raw",
+    "codex_prompt_mode": "trace",
+    "background": false,
+    "reasoning_effort": "medium"
+  }
+}

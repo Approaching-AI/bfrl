@@ -1,0 +1,68 @@
+{
+  "session_id": "e200d7f06f",
+  "created_at": "2026-03-18T19:42:10+08:00",
+  "adapter": "codex",
+  "session_style": "tool-loop",
+  "task": {
+    "id": "demo-codex-session-002",
+    "title": "你好",
+    "goal": "hi!",
+    "memory_paths": [],
+    "extra_context": ""
+  },
+  "state": {
+    "shell_name": "powershell",
+    "usage_view": "task-only",
+    "prompt_text": "Reply with exactly this text: hi!",
+    "codex_prompt_mode": "minimal",
+    "model": "gpt-5.4",
+    "usage_summary": {
+      "input_tokens": 10858,
+      "cached_input_tokens": 5504,
+      "output_tokens": 22,
+      "reasoning_output_tokens": 14,
+      "total_tokens": 10880
+    }
+  },
+  "trace": [
+    {
+      "timestamp": "2026-03-18T19:42:10+08:00",
+      "turn_index": 1,
+      "response_id": "019d00c0-a9ca-7540-91ad-fea36ee2c4b1",
+      "model": "gpt-5.4",
+      "status": "completed",
+      "output_text": "hi!",
+      "usage": {
+        "input_tokens": 10858,
+        "cached_input_tokens": 5504,
+        "output_tokens": 22,
+        "reasoning_output_tokens": 14,
+        "total_tokens": 10880
+      },
+      "function_calls": [],
+      "captured": {
+        "thread_id": "019d00c0-a9ca-7540-91ad-fea36ee2c4b1",
+        "thread_path": "C:\\Users\\oql\\.codex\\sessions\\2026\\03\\18\\rollout-2026-03-18T19-41-59-019d00c0-a9ca-7540-91ad-fea36ee2c4b1.jsonl",
+        "turn_id": "019d00c0-aa15-7f63-95e3-41eb153973de",
+        "commands": [],
+        "usage": {
+          "input_tokens": 10858,
+          "cached_input_tokens": 5504,
+          "output_tokens": 22,
+          "reasoning_output_tokens": 14,
+          "total_tokens": 10880
+        },
+        "stderr": [],
+        "prompt_breakdown": {
+          "base_instructions_chars": 15225,
+          "developer_chars": 4899,
+          "environment_chars": 197,
+          "other_user_chars": 0,
+          "task_prompt_chars": 33,
+          "overhead_chars": 20321
+        }
+      }
+    }
+  ],
+  "final_text": "hi!"
+}

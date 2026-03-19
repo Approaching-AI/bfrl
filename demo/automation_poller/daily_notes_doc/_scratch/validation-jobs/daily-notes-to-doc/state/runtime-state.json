@@ -1,0 +1,20 @@
+{
+  "run_count": 3,
+  "last_run_started_at": "2026-03-19T10:33:57+08:00",
+  "last_run_finished_at": "2026-03-19T10:33:57+08:00",
+  "next_run_at": "2026-03-19T10:34:17+08:00",
+  "last_status": "updated",
+  "processed_notes": [
+    "2026-03-17-01",
+    "2026-03-18-01",
+    "2026-03-19-01"
+  ],
+  "last_processed_note": "2026-03-19-01",
+  "last_report_path": "demo\\automation_poller\\daily_notes_doc\\_scratch\\validation-jobs\\daily-notes-to-doc\\reports\\2026-03-19-103357-daily-notes-to-doc.md",
+  "doc_hashes": {
+    "current-state.md": "3127cc0512fc0f26",
+    "decisions.md": "61fce9e08cef9753",
+    "open-questions.md": "6866c14a45a7aa68",
+    "source-map.md": "f197c677dbb1f81d"
+  }
+}

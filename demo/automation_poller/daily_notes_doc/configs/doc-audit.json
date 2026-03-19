@@ -1,0 +1,10 @@
+{
+  "name": "doc-audit",
+  "agent_kind": "doc-audit",
+  "enabled": true,
+  "poll_interval_seconds": 20,
+  "workspace_dir": "demo/automation_poller/daily_notes_doc/fixtures/workspace",
+  "system_prompt_file": "demo/automation_poller/daily_notes_doc/system-prompts/doc-audit-system.md",
+  "state_file": "demo/automation_poller/daily_notes_doc/jobs/doc-audit/state/runtime-state.json",
+  "reports_dir": "demo/automation_poller/daily_notes_doc/jobs/doc-audit/reports"
+}

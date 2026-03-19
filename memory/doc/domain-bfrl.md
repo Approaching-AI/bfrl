@@ -117,6 +117,14 @@
 
 最好的做法是设计一个**领域 outcome harness**。
 
+这里补一个术语说明：`Outcome Harness` 不是我目前看到的外部标准固定术语，它是建立在近来流行起来的 `Harness Engineering` 语境上的一个项目内延伸说法。它专指 harness 中那一部分负责：
+
+- 从领域环境读取任务最终状态
+- 把最终状态转换成可用的 outcome signal
+- 为后续 rollout / consolidation 提供 success、quality、cost、risk、escalation 等判定
+
+因此，`Outcome Harness` 不是另一个大模型 verifier，也不是整个 agent harness，而是更窄的一层：**面向 outcome 的环境判定与反馈层**。
+
 它不一定输出单一标量，完全可以输出 outcome card：
 
 - `success`: 成功 / 失败 / 部分成功

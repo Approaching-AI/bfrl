@@ -1,0 +1,11 @@
+{
+  "run_count": 3,
+  "last_run_started_at": "2026-03-19T11:44:26.9432556+08:00",
+  "last_run_finished_at": "2026-03-19T11:44:26.9452550+08:00",
+  "next_run_at": "2026-03-19T11:44:46.9432556+08:00",
+  "last_status": "pass",
+  "last_report_path": "demo/_scratch/real-agent-validation/jobs/doc-audit/reports/20260319T114415+0800-doc-audit.md",
+  "last_findings": [
+    "No findings; derived docs are fresh, traceable, and schema-compliant."
+  ]
+}

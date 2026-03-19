@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PATH=\"/d/texlive/2022/bin/win32:$PATH\")",
+      "Bash(xelatex -interaction=nonstopmode slides.tex)",
+      "Bash(python:*)"
+    ]
+  }
+}

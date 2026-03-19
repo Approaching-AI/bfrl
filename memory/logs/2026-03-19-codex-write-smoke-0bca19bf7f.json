@@ -1,0 +1,71 @@
+{
+  "session_id": "0bca19bf7f",
+  "created_at": "2026-03-19T10:53:41+08:00",
+  "adapter": "codex",
+  "session_style": "tool-loop",
+  "task": {
+    "id": "codex-write-smoke",
+    "title": "Codex write smoke test",
+    "goal": "Create the file `demo/_scratch/codex-write-smoke.txt` with exactly one line: codex write smoke test",
+    "memory_paths": [],
+    "extra_context": "Do the minimum work necessary and then report success.",
+    "system_prompt": "You are a focused workspace maintenance agent. Follow the task exactly. You may edit files inside the workspace when required. Keep changes minimal and stop as soon as the requested file has been created with the exact requested content.",
+    "system_prompt_path": "",
+    "allow_file_edits": true
+  },
+  "state": {
+    "shell_name": "powershell",
+    "usage_view": "raw",
+    "prompt_text": "System prompt:\nYou are a focused workspace maintenance agent. Follow the task exactly. You may edit files inside the workspace when required. Keep changes minimal and stop as soon as the requested file has been created with the exact requested content.\n\nThis is a Codex session task.\nDo only the work needed for this task.\nDo not broaden the task.\nYou may create or modify files if the task requires it.\n\nTask id: codex-write-smoke\nTitle: Codex write smoke test\nGoal: Create the file `demo/_scratch/codex-write-smoke.txt` with exactly one line: codex write smoke test\nIf the task does not require files, answer directly with the minimum necessary text.\n\nExtra context: Do the minimum work necessary and then report success.\n\nOutput requirement:\n- 1 short sentence if possible\n- answer the task directly and then stop",
+    "codex_prompt_mode": "trace",
+    "model": "gpt-5.4",
+    "usage_summary": {
+      "input_tokens": 23122,
+      "cached_input_tokens": 21248,
+      "output_tokens": 405,
+      "reasoning_output_tokens": 291,
+      "total_tokens": 23527
+    }
+  },
+  "trace": [
+    {
+      "timestamp": "2026-03-19T10:53:41+08:00",
+      "turn_index": 1,
+      "response_id": "019d0403-00a8-7d10-b68a-ddf755788a05",
+      "model": "gpt-5.4",
+      "status": "completed",
+      "output_text": "Created `demo/_scratch/codex-write-smoke.txt` with the requested content.",
+      "usage": {
+        "input_tokens": 23122,
+        "cached_input_tokens": 21248,
+        "output_tokens": 405,
+        "reasoning_output_tokens": 291,
+        "total_tokens": 23527
+      },
+      "function_calls": [],
+      "captured": {
+        "thread_id": "019d0403-00a8-7d10-b68a-ddf755788a05",
+        "thread_path": "C:\\Users\\oql\\.codex\\sessions\\2026\\03\\19\\rollout-2026-03-19T10-53-18-019d0403-00a8-7d10-b68a-ddf755788a05.jsonl",
+        "turn_id": "019d0403-00fa-7543-99ab-2aab9bd6f4c6",
+        "commands": [],
+        "usage": {
+          "input_tokens": 23122,
+          "cached_input_tokens": 21248,
+          "output_tokens": 405,
+          "reasoning_output_tokens": 291,
+          "total_tokens": 23527
+        },
+        "stderr": [],
+        "prompt_breakdown": {
+          "base_instructions_chars": 15225,
+          "developer_chars": 4934,
+          "environment_chars": 0,
+          "other_user_chars": 0,
+          "task_prompt_chars": 1892,
+          "overhead_chars": 20159
+        }
+      }
+    }
+  ],
+  "final_text": "Created `demo/_scratch/codex-write-smoke.txt` with the requested content."
+}

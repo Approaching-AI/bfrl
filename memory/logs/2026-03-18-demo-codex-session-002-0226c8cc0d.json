@@ -1,0 +1,68 @@
+{
+  "session_id": "0226c8cc0d",
+  "created_at": "2026-03-18T19:41:43+08:00",
+  "adapter": "codex",
+  "session_style": "tool-loop",
+  "task": {
+    "id": "demo-codex-session-002",
+    "title": "你好",
+    "goal": "hi!",
+    "memory_paths": [],
+    "extra_context": ""
+  },
+  "state": {
+    "shell_name": "powershell",
+    "usage_view": "task-only",
+    "prompt_text": "hi!",
+    "codex_prompt_mode": "minimal",
+    "model": "gpt-5.4",
+    "usage_summary": {
+      "input_tokens": 10852,
+      "cached_input_tokens": 6528,
+      "output_tokens": 29,
+      "reasoning_output_tokens": 13,
+      "total_tokens": 10881
+    }
+  },
+  "trace": [
+    {
+      "timestamp": "2026-03-18T19:41:43+08:00",
+      "turn_index": 1,
+      "response_id": "019d00c0-4129-7833-93cf-305e6e22c835",
+      "model": "gpt-5.4",
+      "status": "completed",
+      "output_text": "hi! What can I help you with today?",
+      "usage": {
+        "input_tokens": 10852,
+        "cached_input_tokens": 6528,
+        "output_tokens": 29,
+        "reasoning_output_tokens": 13,
+        "total_tokens": 10881
+      },
+      "function_calls": [],
+      "captured": {
+        "thread_id": "019d00c0-4129-7833-93cf-305e6e22c835",
+        "thread_path": "C:\\Users\\oql\\.codex\\sessions\\2026\\03\\18\\rollout-2026-03-18T19-41-32-019d00c0-4129-7833-93cf-305e6e22c835.jsonl",
+        "turn_id": "019d00c0-417b-7d92-94ee-bd4aa9c636f5",
+        "commands": [],
+        "usage": {
+          "input_tokens": 10852,
+          "cached_input_tokens": 6528,
+          "output_tokens": 29,
+          "reasoning_output_tokens": 13,
+          "total_tokens": 10881
+        },
+        "stderr": [],
+        "prompt_breakdown": {
+          "base_instructions_chars": 15225,
+          "developer_chars": 4899,
+          "environment_chars": 197,
+          "other_user_chars": 0,
+          "task_prompt_chars": 3,
+          "overhead_chars": 20321
+        }
+      }
+    }
+  ],
+  "final_text": "hi! What can I help you with today?"
+}

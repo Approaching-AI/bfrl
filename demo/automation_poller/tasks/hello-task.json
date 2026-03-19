@@ -1,0 +1,7 @@
+{
+  "id": "hello-codex",
+  "title": "最小轮询任务",
+  "goal": "hi!",
+  "memory_paths": [],
+  "extra_context": "这是一个最小自动化轮询示例，用来验证定时触发和任务归档流程。"
+}

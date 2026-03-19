@@ -1,0 +1,9 @@
+{
+  "id": "codex-write-smoke",
+  "title": "Codex write smoke test",
+  "goal": "Create the file `demo/_scratch/codex-write-smoke.txt` with exactly one line: codex write smoke test",
+  "memory_paths": [],
+  "extra_context": "Do the minimum work necessary and then report success.",
+  "allow_file_edits": true,
+  "system_prompt": "You are a focused workspace maintenance agent. Follow the task exactly. You may edit files inside the workspace when required. Keep changes minimal and stop as soon as the requested file has been created with the exact requested content."
+}

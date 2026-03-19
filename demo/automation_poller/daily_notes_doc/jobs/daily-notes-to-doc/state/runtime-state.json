@@ -1,0 +1,13 @@
+{
+  "run_count": 4,
+  "last_run_started_at": "2026-03-19T11:59:33.9090056+08:00",
+  "last_run_finished_at": "2026-03-19T11:59:33.9090056+08:00",
+  "next_run_at": "2026-03-19T11:59:53.9090056+08:00",
+  "last_status": "skipped",
+  "processed_notes": [
+    "2026-03-17-01",
+    "2026-03-18-01"
+  ],
+  "last_processed_note": "2026-03-18-01",
+  "last_report_path": "demo/automation_poller/daily_notes_doc/jobs/daily-notes-to-doc/reports/20260319-115933-no-new-notes.md"
+}
