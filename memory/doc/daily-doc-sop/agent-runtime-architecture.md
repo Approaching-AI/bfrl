@@ -21,6 +21,8 @@ It answers a different question from the three agent design documents:
 
 The runtime lives under `agents/`.
 
+Within the `bfrl` superproject, that path is mounted from the `auto-meta-agent` git submodule. The integration contract still uses the `agents/` mount point so the scheduler, configs, and downstream docs do not need a second path vocabulary.
+
 Each agent owns one self-contained workspace:
 
 - `agents/<agent-id>/agent.json`

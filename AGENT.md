@@ -168,6 +168,8 @@
   - 已验证的稳定流程；目前仍应谨慎增长
 - `memory/handoff/`
   - session 间交接
+- `agents/`
+  - `auto-meta-agent` 子仓挂载点；调度器入口、agent 定义与 runner 适配层都在这里，集成路径保持为 `agents/`
 - `meta-agent/`
   - 若 submodule 已初始化，把它视为次级方法论文档；若未初始化，不要假设其中内容存在
 

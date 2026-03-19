@@ -14,6 +14,7 @@
 - `memory/doc/` — 项目文档快照
 - `memory/sop/` — 标准操作流程
 - `memory/handoff/` — session 间的任务交接文件
+- `agents/` — `auto-meta-agent` agent runtime（git submodule，挂载路径保持为 `agents/`）
 - `meta-agent/` — agent 工作方法论（git submodule）
 
 ## Meta Agent Guidelines
