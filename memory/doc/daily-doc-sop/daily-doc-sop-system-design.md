@@ -193,7 +193,7 @@ demo 中的 `daily-note-derived/` 证明了三件事：
 
 ### Agent 1: Note Relation Agent
 
-详细设计见：`memory/doc/note-relation-agent-design.md`
+详细设计见：`memory/doc/daily-doc-sop/note-relation-agent-design.md`
 
 #### 职责
 
@@ -227,7 +227,7 @@ demo 中的 `daily-note-derived/` 证明了三件事：
 
 ### Agent 2: Doc Maintenance Agent
 
-详细设计见：`memory/doc/doc-maintenance-agent-design.md`
+详细设计见：`memory/doc/daily-doc-sop/doc-maintenance-agent-design.md`
 
 #### 职责
 
@@ -263,7 +263,7 @@ demo 中的 `daily-note-derived/` 证明了三件事：
 
 ### Agent 3: SOP Promotion Agent
 
-详细设计见：`memory/doc/sop-promotion-agent-design.md`
+详细设计见：`memory/doc/daily-doc-sop/sop-promotion-agent-design.md`
 
 #### 职责
 

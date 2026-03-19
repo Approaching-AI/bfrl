@@ -283,7 +283,7 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
   "affected_docs": [
     {
       "action": "update-existing-doc",
-      "doc_path": "memory/doc/daily-doc-sop-system-design.md",
+      "doc_path": "memory/doc/daily-doc-sop/daily-doc-sop-system-design.md",
       "reason": "补充单一领域边界与新建 doc 能力边界"
     }
   ],
@@ -524,7 +524,7 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 
 可以。
 
-当前 Codex runner 本身具备创建和编辑文件的能力，只要 task 允许写入目标路径，Agent 就可以新建 markdown 文档。
+当前正式系统的 launcher adapter 只要具备创建和编辑文件的能力，并且 task 允许写入目标路径，Agent 就可以新建 markdown 文档；这不应被写死为只依赖 Codex。
 
 ### 2. 当前 demo 实现层面
 

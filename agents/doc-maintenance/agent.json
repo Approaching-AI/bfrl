@@ -1,0 +1,53 @@
+{
+  "id": "doc-maintenance",
+  "name": "Doc Maintenance Agent",
+  "description": "Consume note relation work orders, update or create docs, and keep the doc index in sync.",
+  "enabled": true,
+  "order": 20,
+  "task": {
+    "id": "doc-maintenance",
+    "title": "Maintain domain docs",
+    "goal": "Read note-relation work orders for the single-domain BFRL workspace, update existing docs with minimal patches or create new docs when justified, and emit a machine-readable result without writing SOPs.",
+    "system_prompt_path": "system.md",
+    "memory_paths": [
+      "../../AGENT.md",
+      "../../CLAUDE.md",
+      "../../meta-agent/doc/methodology.md",
+      "../../memory/doc/project-overview.md",
+      "../../memory/doc/domain-bfrl.md",
+      "../../memory/doc/daily-doc-sop/INDEX.md",
+      "../../memory/doc/daily-doc-sop/agent-runtime-architecture.md",
+      "../../memory/doc/daily-doc-sop/main-orchestrator-design.md",
+      "../../memory/doc/daily-doc-sop/runner-adapter-contract.md",
+      "../../memory/doc/daily-doc-sop/daily-doc-sop-system-design.md",
+      "../../memory/doc/daily-doc-sop/doc-maintenance-agent-design.md"
+    ],
+    "allow_file_edits": true
+  },
+  "dependencies": [
+    "note-relation"
+  ],
+  "wakeup": {
+    "watch_globs": [
+      "agents/note-relation/runtime/work-orders/*.json"
+    ]
+  },
+  "launcher": {
+    "kind": "codex",
+    "config": {
+      "model": "gpt-5.4",
+      "session_style": "tool-loop",
+      "max_turns": 8,
+      "shell": "powershell",
+      "usage_view": "raw",
+      "prompt_mode": "trace",
+      "background": false,
+      "reasoning_effort": "medium"
+    }
+  },
+  "paths": {
+    "workspace_root": "../..",
+    "runtime_root": "runtime",
+    "launcher_root": "runtime/launchers"
+  }
+}

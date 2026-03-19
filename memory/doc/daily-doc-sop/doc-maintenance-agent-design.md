@@ -265,7 +265,7 @@ doc 是 expert context，不是 session dump。
   "doc_actions": [
     {
       "action": "updated",
-      "doc_path": "memory/doc/daily-doc-sop-system-design.md",
+      "doc_path": "memory/doc/daily-doc-sop/daily-doc-sop-system-design.md",
       "reason": "补充单一领域边界与新建 doc 能力边界"
     }
   ],

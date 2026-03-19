@@ -1,0 +1,51 @@
+{
+  "id": "note-relation",
+  "name": "Note Relation Agent",
+  "description": "Triage newly arrived daily notes, assign relations, and emit one JSON work order per note.",
+  "enabled": true,
+  "order": 10,
+  "task": {
+    "id": "note-relation",
+    "title": "Triage new daily notes",
+    "goal": "Read new notes in the single-domain BFRL workspace, assign note relations, identify affected docs and SOP candidates, and write a machine-readable work order without modifying docs or SOPs.",
+    "system_prompt_path": "system.md",
+    "memory_paths": [
+      "../../AGENT.md",
+      "../../CLAUDE.md",
+      "../../meta-agent/doc/methodology.md",
+      "../../memory/doc/project-overview.md",
+      "../../memory/doc/domain-bfrl.md",
+      "../../memory/doc/daily-doc-sop/INDEX.md",
+      "../../memory/doc/daily-doc-sop/agent-runtime-architecture.md",
+      "../../memory/doc/daily-doc-sop/main-orchestrator-design.md",
+      "../../memory/doc/daily-doc-sop/runner-adapter-contract.md",
+      "../../memory/doc/daily-doc-sop/daily-doc-sop-system-design.md",
+      "../../memory/doc/daily-doc-sop/note-relation-agent-design.md"
+    ],
+    "allow_file_edits": true
+  },
+  "dependencies": [],
+  "wakeup": {
+    "watch_globs": [
+      "memory/daily-notes/*.md"
+    ]
+  },
+  "launcher": {
+    "kind": "codex",
+    "config": {
+      "model": "gpt-5.4",
+      "session_style": "tool-loop",
+      "max_turns": 8,
+      "shell": "powershell",
+      "usage_view": "raw",
+      "prompt_mode": "trace",
+      "background": false,
+      "reasoning_effort": "medium"
+    }
+  },
+  "paths": {
+    "workspace_root": "../..",
+    "runtime_root": "runtime",
+    "launcher_root": "runtime/launchers"
+  }
+}

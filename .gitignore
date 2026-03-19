@@ -1,5 +1,19 @@
 .tmp_research/
 
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+
+# Agent runtime artifacts
+agents/*/runtime/scheduler-state.json
+agents/*/runtime/state/*.json
+agents/*/runtime/work-orders/*.json
+agents/*/runtime/reports/*.json
+agents/*/runtime/reports/*.md
+agents/*/runtime/launchers/*/runs/
+agents/*/runtime/launchers/*/scratch/
+agents/*/runtime/launchers/*/state/
+
 memory/doc/bfrl-theoretical-increment-over-harness/_markdown_bfrl-theoretical-increment-over-harness/
 memory/doc/bfrl-theoretical-increment-over-harness/*.aux
 memory/doc/bfrl-theoretical-increment-over-harness/*.log
