@@ -14,6 +14,8 @@ Current scope:
 
 - [daily-doc-sop-system-design.md](daily-doc-sop-system-design.md)
   - Overall system design and agent boundaries.
+- [daily-doc-sop-methodology-review.md](daily-doc-sop-methodology-review.md)
+  - Review of the current three-agent methodology and a more stable cluster-aware design direction.
 - [agent-runtime-architecture.md](agent-runtime-architecture.md)
   - Runtime packaging, scheduler contract, per-agent folder layout, and work-order flow under `/agents`.
 - [main-orchestrator-design.md](main-orchestrator-design.md)

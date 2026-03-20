@@ -1,0 +1,33 @@
+# Workspace-specific config for the vendored agents runtime.
+# Keep project context here so the `agents/` submodule can stay reusable.
+
+watch: false
+sleep_seconds: 2.0
+memory_root: memory
+default_model: gpt-5.4
+
+agent_models:
+  note-relation: gpt-5.4
+  doc-maintenance: gpt-5.4
+  sop-promotion: gpt-5.4
+
+shared_memory_paths:
+  - memory/doc/project-overview.md
+  - memory/doc/domain-bfrl.md
+  - memory/doc/daily-doc-sop/INDEX.md
+  - memory/doc/daily-doc-sop/agent-runtime-architecture.md
+  - memory/doc/daily-doc-sop/main-orchestrator-design.md
+  - memory/doc/daily-doc-sop/runner-adapter-contract.md
+  - memory/doc/daily-doc-sop/daily-doc-sop-system-design.md
+  - memory/doc/daily-doc-sop/daily-doc-sop-methodology-review.md
+
+agent_task_overrides:
+  note-relation:
+    extra_memory_paths:
+      - memory/doc/daily-doc-sop/note-relation-agent-design.md
+  doc-maintenance:
+    extra_memory_paths:
+      - memory/doc/daily-doc-sop/doc-maintenance-agent-design.md
+  sop-promotion:
+    extra_memory_paths:
+      - memory/doc/daily-doc-sop/sop-promotion-agent-design.md

@@ -143,6 +143,14 @@ At minimum, the scheduler can require evidence that the run wrote one of:
 
 This enforcement belongs to orchestration rather than domain logic. It checks whether the session produced consumable runtime outputs, not whether the agent's reasoning was correct.
 
+For the formal `note-relation -> doc-maintenance -> sop-promotion` chain, the scheduler should go one step further:
+
+- require that a downstream work-order JSON was actually written, not only runtime state
+- reject malformed JSON artifacts
+- stop at generic JSON-object validation rather than enforcing domain-specific handoff fields
+
+This still does not replace domain reasoning, but it prevents the chain from silently accepting missing or malformed handoff artifacts without turning `main.py` into a semantic parser for agent-to-agent JSON.
+
 ## Execution Order
 
 Agents are evaluated in dependency order:

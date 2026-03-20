@@ -39,8 +39,8 @@
 
 这些信号可能来自：
 
-- Agent1 的 `work-order.json`
 - Agent2 的 `result.json`
+- 必要时回溯 Agent1 work-order 中保留下来的程序性知识线索，作为证据链补充，而不是作为最终裁决
 
 ### 2. 判断是否满足 SOP 条件
 
@@ -64,8 +64,8 @@
 
 至少包括：
 
-- work-order 中的 `sop_candidates`
 - doc maintenance result 中的 `sop_signals`
+- 必要时可回读上游 work-order 中的 `procedural_hints`
 
 ### 2. 支撑这些候选的 doc
 

@@ -57,7 +57,7 @@
 - 世界观 / 方法类 doc
 - 专题 expert doc
 - 阶段性 doc
-- SOP 候选主题
+- 需要被保留给后续 Agent 的程序性知识线索
 
 ### 4. 做第一次 context credit assignment
 
@@ -65,7 +65,7 @@
 
 - 仅保留在 note
 - 提交给 doc 维护
-- 提交给 SOP 提升候选
+- 保留程序性知识线索，供 doc Agent 后续判断
 - 标记为需要未来治理关注
 
 ## 输入
@@ -127,9 +127,15 @@
 
 指出哪些 doc 需要被更新，以及为什么需要更新。
 
-### 3. SOP 候选信号
+### 3. 程序性知识线索
 
-指出这条新 note 是否包含程序性知识，并且是否已经具备被提升为 SOP 候选的迹象。
+指出这条新 note 是否包含程序性知识线索，以及这些线索为什么值得在 doc 维护阶段继续保留。
+
+这里的边界要明确：
+
+- `Note Relation Agent` 可以提供线索和证据
+- 但不负责裁定“是否已经成为正式 SOP 候选”
+- 这个判断应由 `Doc Maintenance Agent` 在完成 doc 压缩后再做
 
 ### 4. 延后处理信号
 
@@ -287,7 +293,17 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
       "reason": "补充单一领域边界与新建 doc 能力边界"
     }
   ],
-  "sop_candidates": [],
+  "procedural_hints": [
+    {
+      "task": "daily-doc-sop-maintenance",
+      "hint": "当前经验已经出现稳定的先后步骤，但是否足够进入 SOP 仍需在 doc 压缩后再判断",
+      "evidence_note_ids": ["2026-03-19-01"],
+      "open_questions": [
+        "触发条件是否已经跨 case 稳定",
+        "结束条件是否已经足够清楚"
+      ]
+    }
+  ],
   "credit_assignment": {
     "primary_destination": "doc-update",
     "secondary_destinations": [],
@@ -300,8 +316,15 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 ### 这份 JSON 的作用
 
 - 给 `Doc Maintenance Agent` 明确输入
-- 给 `SOP Promotion Agent` 明确候选线索
+- 给 `Doc Maintenance Agent` 保留程序性知识线索，而不是替它提前做 SOP 裁决
 - 给未来治理 Agent 保留冲突和失效信号
+
+其中 `procedural_hints` 建议始终显式出现：
+
+- 有线索时写对象数组
+- 没有线索时写空数组 `[]`
+
+这样 Agent2 才能区分“没有程序性线索”和“上游漏写了这个字段”。
 
 ## reread 规则
 
@@ -430,7 +453,7 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 - 是否应该更新某篇世界观/方法 doc
 - 是否应该更新某篇专题 doc
 - 是否应该影响某篇阶段性 doc
-- 是否出现了 SOP 候选
+- 是否存在需要后续保留的程序性知识线索
 
 ### Phase 5: Credit Assignment
 
@@ -438,7 +461,7 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 
 - `note-only`
 - `doc-update`
-- `sop-candidate`
+- `doc-update-with-procedural-hints`
 - `future-governance`
 
 这里的关键不是分类名字，而是让后续 Agent 接手时有明确边界。
@@ -461,11 +484,12 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 - 同类结论在多个 note 中重复出现
 - 它不是特定 case 才成立的偶然细节
 
-### 3. 什么情况下推给 SOP 候选
+### 3. 什么情况下保留程序性知识线索
 
-- 经验已经表现为稳定步骤
-- 它面向具体领域动作
-- 已经可以写出触发条件、步骤和成功标记
+- 经验已经表现出程序性结构
+- 它面向具体领域动作，而不只是概念说明
+- 这些线索值得在 doc 中被压缩和核实
+- 但是否已经足够稳定，不在 Agent1 这里拍板
 
 ### 4. 什么情况下只标记为 future-governance
 
@@ -493,12 +517,12 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 
 ## 与 Agent 3 的接口
 
-`SOP Promotion Agent` 需要的不是通用总结，而是程序性知识线索。因此 `Note Relation Agent` 给 Agent 3 的重点应该是：
+`Note Relation Agent` 不应直接给 `SOP Promotion Agent` 下结论；它更合适的角色，是把程序性知识线索先交给 `Doc Maintenance Agent`。因此它的接口重点应该是：
 
 - 哪些 note / doc 片段已经体现稳定步骤
 - 这些步骤针对的具体领域任务是什么
 - 触发条件和成功标记是否已经初步可见
-- 当前是否只是候选，还是已经接近可编译状态
+- 当前有哪些不确定性需要 Agent2 继续核实
 
 ## 新建 doc 的判定
 
@@ -567,7 +591,7 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 
 ### 1. 过度提升
 
-把一次性的 note 误送进 doc 或 SOP 候选。
+把一次性的 note 误送进 doc，或者过早暗示它已经接近 SOP。
 
 ### 2. 漏掉关系
 
@@ -619,4 +643,4 @@ markdown 报告可以保留，但它只是给人看；真正的 machine-readable
 
 再补一句更落地的话：
 
-> 这个 Agent 不应该保存自己的长期知识；它只保存运行时状态和分流工作单，而真正的知识仍然只应该沉到 `daily-notes`、`doc` 和 `sop` 中。
+> 这个 Agent 不应该保存自己的长期知识；它只保存运行时状态和分流工作单，而真正的知识仍然只应该沉到 `daily-notes`、`doc` 和 `sop` 中。它可以保留程序性知识线索，但不应越权裁定 SOP promotion。

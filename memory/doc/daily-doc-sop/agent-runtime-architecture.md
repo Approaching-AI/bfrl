@@ -174,6 +174,14 @@ If one of these agents is woken by changed inputs, success is not just "the sess
 
 This enforcement belongs in the scheduler because it validates runtime side effects, while the agent still owns the content of those artifacts.
 
+For the three formal chain agents, this should include:
+
+- requiring a changed downstream work-order JSON on wakeup, not only a changed runtime state file
+- validating that the changed work-order JSON is parseable
+- validating that the artifact is a top-level JSON object
+
+It should stop there. Chain-specific semantic fields such as `procedural_hints`, `sop_signals`, or promotion decision keys belong to the agent-to-agent contract and should be interpreted by downstream agents, not hard-coded into the scheduler.
+
 ## Dependency Model
 
 Dependencies are declared explicitly in `agent.json`.

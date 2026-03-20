@@ -4,6 +4,8 @@
 __pycache__/
 *.py[cod]
 
+memory/.agents/
+
 memory/doc/bfrl-theoretical-increment-over-harness/_markdown_bfrl-theoretical-increment-over-harness/
 memory/doc/bfrl-theoretical-increment-over-harness/*.aux
 memory/doc/bfrl-theoretical-increment-over-harness/*.log
